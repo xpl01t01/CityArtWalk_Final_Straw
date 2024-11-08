@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_scroll_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".ItemFragment">
+
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/item_constraint_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- title -->
+        <EditText
+            android:id="@+id/titleEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Title"
+            android:textSize="16sp"
+            android:padding="8dp"
+            android:background="@drawable/edit_text_background"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- address -->
+        <EditText
+            android:id="@+id/addressEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Address"
+            android:textSize="16sp"
+            android:padding="8dp"
+            android:background="@drawable/edit_text_background"
+            app:layout_constraintTop_toBottomOf="@id/titleEditText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <!-- date button -->
+        <Button
+            android:id="@+id/selectDateButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Select Date"
+            android:drawableStart="@drawable/ic_calendar"
+            android:drawablePadding="8dp"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/addressEditText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- location button -->
+        <Button
+            android:id="@+id/getLocationButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Get GPS Location"
+            android:drawableStart="@drawable/ic_location"
+            android:drawablePadding="8dp"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/selectDateButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <!-- location text -->
+        <TextView
+            android:id="@+id/locationTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Location: Not available"
+            android:textSize="14sp"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/getLocationButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- show map button -->
+        <Button
+            android:id="@+id/showMapButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Show Map"
+            android:drawableStart="@drawable/ic_map"
+            android:drawablePadding="8dp"
+            android:padding="8dp"
+            android:enabled="false"
+            app:layout_constraintTop_toBottomOf="@id/locationTextView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <!-- photo ImageView -->
+        <ImageView
+            android:id="@+id/imageViewPhoto"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Selected Photo"
+            app:layout_constraintTop_toBottomOf="@id/showMapButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- photo buttons layout -->
+        <LinearLayout
+            android:id="@+id/photo_buttons_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/imageViewPhoto"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/takePhotoButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Take Photo"
+                android:drawableStart="@drawable/ic_camera"
+                android:drawablePadding="8dp"
+                android:padding="8dp" />
+
+            <Button
+                android:id="@+id/pickPhotoButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Choose Photo"
+                android:drawableStart="@drawable/ic_gallery"
+                android:drawablePadding="8dp"
+                android:padding="8dp"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- share button -->
+        <Button
+            android:id="@+id/shareRecordButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Share Record"
+            android:drawableStart="@drawable/ic_share"
+            android:drawablePadding="8dp"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/photo_buttons_layout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <!-- save and delete button -->
+        <LinearLayout
+            android:id="@+id/save_delete_buttons_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/shareRecordButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save"
+                android:drawableStart="@drawable/ic_save"
+                android:drawablePadding="8dp"
+                android:padding="8dp" />
+
+            <Button
+                android:id="@+id/deleteButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Delete"
+                android:drawableStart="@drawable/ic_delete"
+                android:drawablePadding="8dp"
+                android:padding="8dp"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
