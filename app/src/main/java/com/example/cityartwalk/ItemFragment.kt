@@ -61,9 +61,11 @@ class ItemFragment : Fragment() {
         if (bitmap != null) {
             setScaledBitmap(bitmap)
             savedBitmap = bitmap
-            Toast.makeText(requireContext(), "photo taken successfully", Toast.LENGTH_SHORT).show()
+            val imagePath = saveImageToInternalStorage(bitmap)
+            currentRecord?.imagePath = imagePath
+            Toast.makeText(requireContext(), "Photo taken successfully", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(requireContext(), "failed to take photo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Failed to take photo", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -73,7 +75,9 @@ class ItemFragment : Fragment() {
             val bitmap = BitmapFactory.decodeStream(inputStream)
             setScaledBitmap(bitmap)
             savedBitmap = bitmap
-            Toast.makeText(requireContext(), "photo selected from gallery", Toast.LENGTH_SHORT).show()
+            val imagePath = saveImageToInternalStorage(bitmap)
+            currentRecord?.imagePath = imagePath
+            Toast.makeText(requireContext(), "Photo selected from gallery", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -113,29 +117,47 @@ class ItemFragment : Fragment() {
                     "ItemFragment",
                     "loaded record: id=${record.id}, latitude=${record.latitude}, longitude=${record.longitude}, address=${record.address}"
                 )
+                binding.deleteButton.visibility = View.VISIBLE
 
-                //update location display
-                if ((record.latitude != 0.0 || record.longitude != 0.0)) {
-                    val displayText = if (!record.address.isNullOrEmpty() && record.address != "address not found") {
-                        "location: ${record.address}"
+                //on other devices image loadin didn't work so we with this we load and display the image if available
+                if (!record.imagePath.isNullOrEmpty()) {
+                    val bitmap = loadImageFromInternalStorage(record.imagePath!!)
+                    if (bitmap != null) {
+                        setScaledBitmap(bitmap)
                     } else {
-                        "location: lat: ${record.latitude}, lng: ${record.longitude}"
+                        //handle the case where the image couldn't be loaded
+                        binding.imageViewPhoto.setImageResource(R.drawable.placeholder_image)
+                    }
+                } else {
+                    //placeholder image if no imagePath is available
+                    binding.imageViewPhoto.setImageResource(R.drawable.placeholder_image)
+                }
+
+                if ((record.latitude != 0.0 || record.longitude != 0.0)) {
+                    val displayText = if (!record.address.isNullOrEmpty() && record.address != "Address not found") {
+                        "Location: ${record.address}"
+                    } else {
+                        "Location: Lat: ${record.latitude}, Lng: ${record.longitude}"
                     }
                     binding.locationTextView.text = displayText
                     binding.showMapButton.isEnabled = true
                 } else {
-                    binding.locationTextView.text = "location: not available"
+                    binding.locationTextView.text = "Location: Not available"
                     binding.showMapButton.isEnabled = false
                 }
-
-                //other ui updates (e.g., image, buttons) if needed
             }
         } else {
             //initialize new record
             currentRecord = Record()
             binding.showMapButton.isEnabled = false
             binding.locationTextView.text = "location: not available"
+
+            binding.deleteButton.visibility = View.GONE
+
+            //placeholder image for new records
+            binding.imageViewPhoto.setImageResource(R.drawable.placeholder_image)
         }
+
 
         binding.selectDateButton.setOnClickListener {
             selectDate()
@@ -221,22 +243,25 @@ class ItemFragment : Fragment() {
             record.address = address
             record.date = date
 
+            //imagePath is already set when the image was saved
+
             lifecycleScope.launch(Dispatchers.IO) {
                 if (recordId == -1) {
                     val newId = recordViewModel.insert(record)
                     recordId = newId.toInt()
-                    record.id = recordId  //ensure record.id is mutable
+                    record.id = recordId
                 } else {
                     recordViewModel.update(record)
                 }
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "record saved", Toast.LENGTH_SHORT).show()
-                    //navigate back or update ui as needed
+                    Toast.makeText(requireContext(), "Record saved", Toast.LENGTH_SHORT).show()
+
                 }
             }
         }
     }
+
 
     private fun saveImageToInternalStorage(bitmap: Bitmap): String? {
         return try {
@@ -262,17 +287,37 @@ class ItemFragment : Fragment() {
     }
 
     private fun deleteRecord() {
-        currentRecord?.let {
-            //delete the image file if it exists
-            it.imagePath?.let { path ->
-                deleteImageFromInternalStorage(path)
-            }
-            recordViewModel.delete(it)
-            findNavController().navigateUp() //navigate back to the listfragment
+        currentRecord?.let { record ->
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Record")
+                .setMessage("Are you sure you want to delete this record?")
+                .setPositiveButton("Yes") { _, _ ->
+                    //delete the image file if it exists
+                    record.imagePath?.let { path ->
+                        deleteImageFromInternalStorage(path)
+                    }
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            recordViewModel.delete(record)
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Record deleted", Toast.LENGTH_SHORT).show()
+                                findNavController().navigateUp() //navigate back to the listfragment
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "Error deleting record: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                            Log.e("ItemFragment", "Error deleting record: ${e.message}")
+                        }
+                    }
+                }
+                .setNegativeButton("No", null)
+                .show()
         } ?: run {
-            Toast.makeText(requireContext(), "record not loaded yet", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Record not loaded yet", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     private fun deleteImageFromInternalStorage(filename: String) {
         try {
@@ -298,7 +343,7 @@ class ItemFragment : Fragment() {
                         record.latitude = location.latitude
                         record.longitude = location.longitude
 
-                        Log.d("ItemFragment", "location obtained: lat=${location.latitude}, lng=${location.longitude}")
+                        Log.d("ItemFragment", "Location obtained: Lat=${location.latitude}, Lng=${location.longitude}")
 
                         //reverse geocoding to get address
                         val geocoder = Geocoder(requireContext(), Locale.getDefault())
@@ -308,13 +353,13 @@ class ItemFragment : Fragment() {
                             val addressText = if (!addresses.isNullOrEmpty()) {
                                 addresses[0].getAddressLine(0)
                             } else {
-                                "address not found"
+                                "Address not found"
                             }
 
                             //update the address in the record
                             record.address = addressText
 
-                            Log.d("ItemFragment", "address obtained: $addressText")
+                            Log.d("ItemFragment", "Address obtained: $addressText")
 
                             //save the updated record to the database
                             try {
@@ -323,36 +368,31 @@ class ItemFragment : Fragment() {
                                     val newId = recordViewModel.insert(record)
                                     recordId = newId.toInt()
                                     record.id = recordId
-                                    Log.d("ItemFragment", "new record inserted with id: $recordId")
                                 } else {
-                                    //existing record: update database
                                     recordViewModel.update(record)
-                                    Log.d("ItemFragment", "existing record updated with id: $recordId")
                                 }
                             } catch (e: Exception) {
-                                Log.e("ItemFragment", "error saving record: ${e.message}")
+                                //existing record: update database
+                                Log.e("ItemFragment", "Error saving record: ${e.message}")
                             }
 
                             withContext(Dispatchers.Main) {
-                                //update the ui
-                                val displayText = if (!record.address.isNullOrEmpty() && record.address != "address not found") {
-                                    "location: ${record.address}"
-                                } else {
-                                    "location: lat: ${record.latitude}, lng: ${record.longitude}"
-                                }
-                                binding.locationTextView.text = displayText
+                                //update the UI
+                                binding.locationTextView.text = "Location: $addressText"
+                                binding.addressEditText.setText(addressText) // Optionally update the address field
                                 binding.showMapButton.isEnabled = true
-                                Toast.makeText(requireContext(), "location updated and saved", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), "Location updated and saved", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                 } else {
-                    Log.w("ItemFragment", "failed to get location.")
-                    Toast.makeText(requireContext(), "unable to get location", Toast.LENGTH_SHORT).show()
+                    Log.w("ItemFragment", "Failed to get location.")
+                    Toast.makeText(requireContext(), "Unable to get location", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
+
 
     private fun updateUIWithAddress(addressText: String) {
         binding.showMapButton.isEnabled = true
